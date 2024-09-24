@@ -1,0 +1,146 @@
+Prompt sent to ChatGPT:
+
+        Generate a social media content calendar based on the following information:
+        Business description: boxing gym in nyc targeting young adult males ages 18-35 
+        Target platforms: instagram
+        Date range: 2024-09-24 to 2024-09-30
+        Total days: 7
+
+        Please provide the following in your response:
+        1. 5 content pillars relevant to the business
+        2. For each pillar, provide one relevant keyword
+        3. For each keyword, provide 3 frequently asked questions by the target audience
+        4. Generate an appropriate number of content ideas distributed across the 7 days and selected platforms. Aim for at least one idea every 2-3 days, but adjust based on the business needs and date range.
+
+        Ensure your response strictly adheres to the following JSON schema:
+        
+{
+  "type": "object",
+  "properties": {
+    "contentPillars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "keyword": { "type": "string" },
+          "questions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["name", "keyword", "questions"]
+      }
+    },
+    "contentIdeas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string" },
+          "platform": { "type": "string" },
+          "pillar": { "type": "string" },
+          "contentType": { "type": "string" },
+          "summary": { "type": "string" },
+          "question": { "type": "string" },
+          "contentIdea": { "type": "string" }
+        },
+        "required": ["date", "platform", "pillar", "contentType", "summary", "question", "contentIdea"]
+      }
+    }
+  },
+  "required": ["contentPillars", "contentIdeas"]
+}
+
+        Your response should be a valid JSON object matching this schema exactly.
+      
+
+Response from ChatGPT:
+{
+  "contentPillars": [
+    {
+      "name": "Boxing Techniques",
+      "keyword": "footwork",
+      "questions": [
+        "How can I improve my footwork in boxing?",
+        "What are some drills to enhance footwork?",
+        "Why is footwork important in boxing?"
+      ]
+    },
+    {
+      "name": "Fitness & Conditioning",
+      "keyword": "strength training",
+      "questions": [
+        "What are the best strength training exercises for boxing?",
+        "How often should I incorporate strength training into my routine?",
+        "Can strength training improve boxing performance?"
+      ]
+    },
+    {
+      "name": "Nutrition Tips",
+      "keyword": "protein intake",
+      "questions": [
+        "How much protein should I consume as a boxer?",
+        "What are the benefits of protein intake for boxing?",
+        "Any protein-rich meal suggestions for boxers?"
+      ]
+    },
+    {
+      "name": "Inspirational Quotes",
+      "keyword": "determination",
+      "questions": [
+        "How can determination impact my boxing journey?",
+        "What motivates successful boxers to keep going?",
+        "Can determination be trained and developed?"
+      ]
+    },
+    {
+      "name": "Client Success Stories",
+      "keyword": "transformation",
+      "questions": [
+        "How do clients' lives change after training at the gym?",
+        "What transformations have clients experienced?",
+        "Why are success stories important in boxing?"
+      ]
+    }
+  ],
+  "contentIdeas": [
+    {
+      "date": "2024-09-24",
+      "platform": "Instagram",
+      "pillar": "Boxing Techniques",
+      "contentType": "Video",
+      "summary": "Quick Tips: Mastering Footwork",
+      "question": "How can I improve my footwork in boxing?",
+      "contentIdea": "Share a short tutorial video on footwork drills."
+    },
+    {
+      "date": "2024-09-26",
+      "platform": "Instagram",
+      "pillar": "Fitness & Conditioning",
+      "contentType": "Image",
+      "summary": "Strength Training Essentials",
+      "question": "What are the best strength training exercises for boxing?",
+      "contentIdea": "Post an infographic showcasing top strength exercises for boxers."
+    },
+    {
+      "date": "2024-09-28",
+      "platform": "Instagram",
+      "pillar": "Nutrition Tips",
+      "contentType": "Carousel",
+      "summary": "Fuel Your Workouts: Protein Intake",
+      "question": "How much protein should I consume as a boxer?",
+      "contentIdea": "Create a carousel post with protein-rich meal ideas and their benefits."
+    },
+    {
+      "date": "2024-09-30",
+      "platform": "Instagram",
+      "pillar": "Inspirational Quotes",
+      "contentType": "Quote Graphic",
+      "summary": "Stay Determined & Keep Punching",
+      "question": "How can determination impact my boxing journey?",
+      "contentIdea": "Share a powerful quote graphic on the importance of determination in boxing."
+    }
+  ]
+}
+
