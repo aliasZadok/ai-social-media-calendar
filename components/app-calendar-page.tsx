@@ -15,7 +15,7 @@ import { useAppStore } from '@/lib/store'
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-type SocialMediaPlatform = 'Instagram' | 'Facebook' | 'Twitter' | 'LinkedIn';
+type SocialMediaPlatform = 'instagram' | 'facebook' | 'twitter' | 'linkedin';
 
 const socialMediaIcons: Record<SocialMediaPlatform, JSX.Element> = {
     instagram: (
