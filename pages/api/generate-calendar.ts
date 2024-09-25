@@ -67,14 +67,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       });
 
-      // Handle the possibility that these fields could be arrays
       const description = Array.isArray(data.fields.description) ? data.fields.description[0] : data.fields.description;
       const platforms = Array.isArray(data.fields.platforms) ? data.fields.platforms[0] : data.fields.platforms;
       const startDate = Array.isArray(data.fields.startDate) ? data.fields.startDate[0] : data.fields.startDate;
       const endDate = Array.isArray(data.fields.endDate) ? data.fields.endDate[0] : data.fields.endDate;
+      const frequency = Array.isArray(data.fields.frequency) ? parseInt(data.fields.frequency[0]) : parseInt(data.fields.frequency || '0');
 
       // Validate that none of the fields are missing
-      if (!description || !platforms || !startDate || !endDate) {
+      if (!description || !platforms || !startDate || !endDate || isNaN(frequency)) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -85,18 +85,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const end = new Date(endDate);
       const daysDifference = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
 
+      const getFrequencyLabel = (freq: number) => {
+        if (freq === 1) return 'Daily';
+        if (freq === 7) return 'Weekly';
+        if (freq === 14) return 'Bi-weekly';
+        if (freq === 30) return 'Monthly';
+        return `Every ${freq} days`;
+      };
+
       const prompt = `
         Generate a social media content calendar based on the following information:
         Business description: ${description}
         Target platforms: ${Object.keys(parsedPlatforms).filter(p => parsedPlatforms[p]).join(', ')}
         Date range: ${startDate} to ${endDate}
         Total days: ${daysDifference}
+        Posting frequency: ${getFrequencyLabel(frequency)}
 
         Please provide the following in your response:
         1. 5 content pillars relevant to the business
         2. For each pillar, provide one relevant keyword
         3. For each keyword, provide 3 frequently asked questions by the target audience
-        4. Generate an appropriate number of content ideas distributed across the ${daysDifference} days and selected platforms. Aim for at least one idea every 2-3 days, but adjust based on the business needs and date range.
+        4. Generate content ideas for each platform based on the posting frequency. The number of content ideas should be appropriate for the given frequency and date range.
 
         Ensure your response strictly adheres to the following JSON schema:
         ${calendarSchema}

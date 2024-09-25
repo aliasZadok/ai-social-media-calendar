@@ -8,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Upload } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import FrequencySlider from '@/components/ui/frequency-slider'
 
 export function LandingPage() {
   const router = useRouter()
-  const { formData, calendarData, setFormData, setCalendarData } = useAppStore()
+  const { formData, calendarData, setFormData, setCalendarData, clearFormData } = useAppStore()
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -41,7 +42,7 @@ export function LandingPage() {
       }
 
       const data = await response.json()
-      
+
       setCalendarData(data)
       router.push('/calendar')
     } catch (error) {
@@ -134,20 +135,22 @@ export function LandingPage() {
           {uploadError && <p className="text-red-500 text-sm">{uploadError}</p>}
           <div className="space-y-2">
             <label className="text-sm font-medium">Preferred social media platforms</label>
-            {Object.entries(formData.platforms).map(([platform, checked]) => (
-              <div key={platform} className="flex items-center space-x-2">
-                <Checkbox
-                  id={platform}
-                  checked={checked}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      platforms: { ...formData.platforms, [platform]: checked as boolean },
-                    })
-                  }
-                />
-                <label htmlFor={platform} className="capitalize">{platform}</label>
-              </div>
-            ))}
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(formData.platforms).map(([platform, checked], index) => (
+                <div key={platform} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={platform}
+                    checked={checked}
+                    onCheckedChange={(checked) =>
+                      setFormData({
+                        platforms: { ...formData.platforms, [platform]: checked as boolean },
+                      })
+                    }
+                  />
+                  <label htmlFor={platform} className="capitalize">{platform}</label>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -169,6 +172,12 @@ export function LandingPage() {
               />
             </div>
           </div>
+
+          <FrequencySlider
+            value={formData.frequency}
+            onChange={(value) => setFormData({ ...formData, frequency: value })}
+          />
+
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Generating...' : 'Generate My Calendar'}
           </Button>

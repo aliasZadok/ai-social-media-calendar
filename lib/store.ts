@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
+type FrequencyOption = 1 | 7 | 14 | 30;
+
 interface CalendarFormData {
     description: string
     platforms: {
@@ -11,6 +13,7 @@ interface CalendarFormData {
     }
     startDate: string
     endDate: string
+    frequency: FrequencyOption
 }
 
 interface CalendarData {
@@ -53,6 +56,7 @@ const initialFormData: CalendarFormData = {
     },
     startDate: '',
     endDate: '',
+    frequency: 7,  // Default to weekly (7 days)
 }
 
 export const useAppStore = create<AppState>()(
