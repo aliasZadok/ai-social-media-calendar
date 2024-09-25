@@ -3,17 +3,21 @@ import { cn } from "@/lib/utils"
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  maxLength: number;
   showCount?: boolean;
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, maxLength, showCount = true, onChange, ...props }, ref) => {
+  ({ className, showCount = true, onChange, value, maxLength, ...props }, ref) => {
     const [charCount, setCharCount] = React.useState(0);
 
+    React.useEffect(() => {
+      if (typeof value === 'string') {
+        setCharCount(value.length);
+      }
+    }, [value]);
+
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const input = e.target.value.slice(0, maxLength);
-      e.target.value = input;
+      const input = maxLength ? e.target.value.slice(0, maxLength) : e.target.value;
       setCharCount(input.length);
       if (onChange) {
         const syntheticEvent = {
@@ -33,10 +37,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           ref={ref}
           onChange={handleChange}
+          value={value}
           maxLength={maxLength}
           {...props}
         />
-        {showCount && (
+        {showCount && maxLength && (
           <div className="absolute bottom-2 right-2 text-xs text-gray-500">
             {charCount}/{maxLength}
           </div>

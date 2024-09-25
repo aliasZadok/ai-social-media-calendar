@@ -71,7 +71,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const platforms = Array.isArray(data.fields.platforms) ? data.fields.platforms[0] : data.fields.platforms;
       const startDate = Array.isArray(data.fields.startDate) ? data.fields.startDate[0] : data.fields.startDate;
       const endDate = Array.isArray(data.fields.endDate) ? data.fields.endDate[0] : data.fields.endDate;
-      const frequency = Array.isArray(data.fields.frequency) ? parseInt(data.fields.frequency[0]) : parseInt(data.fields.frequency || '0');
+      const frequency = Array.isArray(data.fields.frequency) 
+      ? parseInt(data.fields.frequency[0])       
+      : data.fields.frequency !== undefined ? parseInt(data.fields.frequency) : 0;
+
+      console.log('Frequency:', frequency);
 
       // Validate that none of the fields are missing
       if (!description || !platforms || !startDate || !endDate || isNaN(frequency)) {

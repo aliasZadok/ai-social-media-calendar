@@ -12,7 +12,7 @@ import FrequencySlider from '@/components/ui/frequency-slider'
 
 export function LandingPage() {
   const router = useRouter()
-  const { formData, calendarData, setFormData, setCalendarData, clearFormData } = useAppStore()
+  const { formData, calendarData, setFormData, setCalendarData } = useAppStore()
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -27,6 +27,8 @@ export function LandingPage() {
     form.append('platforms', JSON.stringify(formData.platforms))
     form.append('startDate', formData.startDate)
     form.append('endDate', formData.endDate)
+    form.append('frequency', formData.frequency.toString())
+    
     if (file) {
       form.append('file', file)
     }
@@ -77,7 +79,7 @@ export function LandingPage() {
       }
 
       if (data.text) {
-        const truncatedText = data.text.substring(0, 500); // Truncate to 500 characters
+        const truncatedText = data.text.substring(0, 2000); // Truncate to 2000 characters
         setFormData({ description: truncatedText });
       } else {
         throw new Error('No text content in the response');
@@ -110,7 +112,7 @@ export function LandingPage() {
               placeholder="e.g., We sell handmade jewellery to women aged 25-45 interested in fashion and sustainability."
               value={formData.description}
               onChange={(e) => setFormData({ description: e.target.value })}
-              maxLength={500}
+              maxLength={2000}
             />
           </div>
           <div className="flex items-center space-x-2">
