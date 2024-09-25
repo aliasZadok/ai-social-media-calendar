@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,15 +12,27 @@ import FrequencySlider from '@/components/ui/frequency-slider'
 
 export function LandingPage() {
   const router = useRouter()
-  const { formData, calendarData, setFormData, setCalendarData } = useAppStore()
+  const { formData, calendarData, setFormData, setCalendarData, clearFormData, clearCalendarData } = useAppStore()
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [hasFormChanged, setHasFormChanged] = useState(false)
+
+  // Function to compare current form data with initial form data
+  const checkFormChanged = useCallback((newFormData: typeof formData) => {
+    return JSON.stringify(newFormData) !== JSON.stringify(formData)
+  }, [formData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+
+    // If form has changed, clear old data before generating new calendar
+    if (hasFormChanged) {
+      clearFormData()
+      clearCalendarData()
+    }
 
     const form = new FormData()
     form.append('description', formData.description)
@@ -28,7 +40,7 @@ export function LandingPage() {
     form.append('startDate', formData.startDate)
     form.append('endDate', formData.endDate)
     form.append('frequency', formData.frequency.toString())
-    
+
     if (file) {
       form.append('file', file)
     }
@@ -46,6 +58,7 @@ export function LandingPage() {
       const data = await response.json()
 
       setCalendarData(data)
+      setHasFormChanged(false) // Reset the change flag
       router.push('/calendar')
     } catch (error) {
       console.error('Error generating calendar:', error)
@@ -80,7 +93,7 @@ export function LandingPage() {
 
       if (data.text) {
         const truncatedText = data.text.substring(0, 2000); // Truncate to 2000 characters
-        setFormData({ description: truncatedText });
+        handleFormChange({ description: truncatedText });
       } else {
         throw new Error('No text content in the response');
       }
@@ -98,6 +111,12 @@ export function LandingPage() {
     }
   }
 
+  const handleFormChange = (changes: Partial<typeof formData>) => {
+    const newFormData = { ...formData, ...changes }
+    setFormData(newFormData)
+    setHasFormChanged(checkFormChanged(newFormData))
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-8 shadow-md">
@@ -111,7 +130,7 @@ export function LandingPage() {
               id="description"
               placeholder="e.g., We sell handmade jewellery to women aged 25-45 interested in fashion and sustainability."
               value={formData.description}
-              onChange={(e) => setFormData({ description: e.target.value })}
+              onChange={(e) => handleFormChange({ description: e.target.value })}
               maxLength={2000}
             />
           </div>
@@ -138,13 +157,13 @@ export function LandingPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium">Preferred social media platforms</label>
             <div className="grid grid-cols-2 gap-4">
-              {Object.entries(formData.platforms).map(([platform, checked], index) => (
+              {Object.entries(formData.platforms).map(([platform, checked]) => (
                 <div key={platform} className="flex items-center space-x-2">
                   <Checkbox
                     id={platform}
                     checked={checked}
                     onCheckedChange={(checked) =>
-                      setFormData({
+                      handleFormChange({
                         platforms: { ...formData.platforms, [platform]: checked as boolean },
                       })
                     }
@@ -161,7 +180,7 @@ export function LandingPage() {
                 id="start-date"
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => setFormData({ startDate: e.target.value })}
+                onChange={(e) => handleFormChange({ startDate: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -170,14 +189,14 @@ export function LandingPage() {
                 id="end-date"
                 type="date"
                 value={formData.endDate}
-                onChange={(e) => setFormData({ endDate: e.target.value })}
+                onChange={(e) => handleFormChange({ endDate: e.target.value })}
               />
             </div>
           </div>
 
           <FrequencySlider
             value={formData.frequency}
-            onChange={(value) => setFormData({ ...formData, frequency: value })}
+            onChange={(value) => handleFormChange({ frequency: value })}
           />
 
           <Button type="submit" className="w-full" disabled={isLoading}>
