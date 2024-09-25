@@ -13,33 +13,32 @@ import FrequencySlider from '@/components/ui/frequency-slider'
 export function LandingPage() {
   const router = useRouter()
   const { formData, calendarData, setFormData, setCalendarData, clearFormData, clearCalendarData } = useAppStore()
+  const [localFormData, setLocalFormData] = useState(formData)
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [hasFormChanged, setHasFormChanged] = useState(false)
 
-  // Function to compare current form data with initial form data
-  const checkFormChanged = useCallback((newFormData: typeof formData) => {
-    return JSON.stringify(newFormData) !== JSON.stringify(formData)
+  useEffect(() => {
+    setLocalFormData(formData)
   }, [formData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // If form has changed, clear old data before generating new calendar
     if (hasFormChanged) {
-      clearFormData()
       clearCalendarData()
+      setFormData(localFormData)
     }
 
     const form = new FormData()
-    form.append('description', formData.description)
-    form.append('platforms', JSON.stringify(formData.platforms))
-    form.append('startDate', formData.startDate)
-    form.append('endDate', formData.endDate)
-    form.append('frequency', formData.frequency.toString())
+    form.append('description', localFormData.description)
+    form.append('platforms', JSON.stringify(localFormData.platforms))
+    form.append('startDate', localFormData.startDate)
+    form.append('endDate', localFormData.endDate)
+    form.append('frequency', localFormData.frequency.toString())
 
     if (file) {
       form.append('file', file)
@@ -58,7 +57,7 @@ export function LandingPage() {
       const data = await response.json()
 
       setCalendarData(data)
-      setHasFormChanged(false) // Reset the change flag
+      setHasFormChanged(false)
       router.push('/calendar')
     } catch (error) {
       console.error('Error generating calendar:', error)
@@ -112,9 +111,9 @@ export function LandingPage() {
   }
 
   const handleFormChange = (changes: Partial<typeof formData>) => {
-    const newFormData = { ...formData, ...changes }
-    setFormData(newFormData)
-    setHasFormChanged(checkFormChanged(newFormData))
+    const newFormData = { ...localFormData, ...changes }
+    setLocalFormData(newFormData)
+    setHasFormChanged(true)
   }
 
   return (
@@ -129,7 +128,7 @@ export function LandingPage() {
             <Textarea
               id="description"
               placeholder="e.g., We sell handmade jewellery to women aged 25-45 interested in fashion and sustainability."
-              value={formData.description}
+              value={localFormData.description}
               onChange={(e) => handleFormChange({ description: e.target.value })}
               maxLength={2000}
             />
@@ -157,14 +156,14 @@ export function LandingPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium">Preferred social media platforms</label>
             <div className="grid grid-cols-2 gap-4">
-              {Object.entries(formData.platforms).map(([platform, checked]) => (
+              {Object.entries(localFormData.platforms).map(([platform, checked]) => (
                 <div key={platform} className="flex items-center space-x-2">
                   <Checkbox
                     id={platform}
                     checked={checked}
                     onCheckedChange={(checked) =>
                       handleFormChange({
-                        platforms: { ...formData.platforms, [platform]: checked as boolean },
+                        platforms: { ...localFormData.platforms, [platform]: checked as boolean },
                       })
                     }
                   />
@@ -179,7 +178,7 @@ export function LandingPage() {
               <Input
                 id="start-date"
                 type="date"
-                value={formData.startDate}
+                value={localFormData.startDate}
                 onChange={(e) => handleFormChange({ startDate: e.target.value })}
               />
             </div>
@@ -188,14 +187,14 @@ export function LandingPage() {
               <Input
                 id="end-date"
                 type="date"
-                value={formData.endDate}
+                value={localFormData.endDate}
                 onChange={(e) => handleFormChange({ endDate: e.target.value })}
               />
             </div>
           </div>
 
           <FrequencySlider
-            value={formData.frequency}
+            value={localFormData.frequency}
             onChange={(value) => handleFormChange({ frequency: value })}
           />
 
