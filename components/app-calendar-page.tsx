@@ -57,7 +57,7 @@ interface ContentIdea {
 }
 
 interface CalendarData {
-  contentPillars: ContentPillar[];
+  contentPillars: string[]; 
   contentIdeas: ContentIdea[];
 }
 
@@ -128,7 +128,7 @@ export default function CalendarPage() {
   // Get color for content pillar
   const getPillarColor = (pillarName: string) => {
     const colors = ['bg-[hsl(var(--chart-1))]', 'bg-[hsl(var(--chart-2))]', 'bg-[hsl(var(--chart-3))]', 'bg-[hsl(var(--chart-4))]', 'bg-[hsl(var(--chart-5))]']
-    const index = calendarData?.contentPillars.findIndex((pillar) => pillar.name === pillarName) || 0
+    const index = calendarData?.contentPillars.indexOf(pillarName) || 0  // Update this line
     return colors[index % colors.length]
   }
 
@@ -229,18 +229,17 @@ export default function CalendarPage() {
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-2">{renderCalendar()}</div>
 
-      {/* Content pillars display */}
       {calendarData && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-2">Content Pillars</h3>
-          <div className="flex flex-wrap gap-2">
-            {calendarData.contentPillars.map((pillar) => (
-              <div key={pillar.name} className={`${getPillarColor(pillar.name)} px-3 py-1 rounded`}>
-                {pillar.name}
-              </div>
-            ))}
-          </div>
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-2">Content Pillars</h3>
+        <div className="flex flex-wrap gap-2">
+          {calendarData.contentPillars.map((pillar) => (
+            <div key={pillar} className={`${getPillarColor(pillar)} px-3 py-1 rounded`}>
+              {pillar}  
+            </div>
+          ))}
         </div>
+      </div>
       )}
 
       {/* Export dropdown */}

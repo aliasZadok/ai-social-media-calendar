@@ -17,7 +17,7 @@ interface CalendarFormData {
 }
 
 interface CalendarData {
-    contentPillars: ContentPillar[]
+    contentPillars: string[];
     contentIdeas: ContentIdea[]
 }
 

@@ -81,7 +81,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         Please provide the following in your response:
         1. 5 content pillars relevant to the business
-        2. Generate exactly ${dates.length} content ideas, one for each of these dates: ${dates.map(d => d.toISOString().split('T')[0]).join(', ')}
+        2. Provide one frequently asked question by the target audience
+        3. Generate exactly ${dates.length} content ideas, one for each of these dates: ${dates.map(d => d.toISOString().split('T')[0]).join(', ')}
 
         Ensure your response strictly adheres to the following JSON schema:
         {
