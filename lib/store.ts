@@ -21,12 +21,6 @@ interface CalendarData {
     contentIdeas: ContentIdea[]
 }
 
-interface ContentPillar {
-    name: string
-    keyword: string
-    questions: string[]
-}
-
 interface ContentIdea {
     date: string
     platform: string
