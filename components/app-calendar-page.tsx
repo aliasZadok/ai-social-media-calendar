@@ -68,16 +68,21 @@ const getIcon = (platform: string): JSX.Element | null => {
 
 export default function CalendarPage() {
   const router = useRouter()
-  const { calendarData, clearCalendarData, clearFormData } = useAppStore()
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const { formData, calendarData, clearCalendarData, clearFormData } = useAppStore()
+  const [currentDate, setCurrentDate] = useState(new Date(formData.startDate))
   const [selectedContent, setSelectedContent] = useState<ContentIdea | null>(null)
 
+  const startDate = new Date(formData.startDate)
+  const endDate = new Date(formData.endDate)
+
+  // Redirect to home if calendar data is not available
   useEffect(() => {
     if (!calendarData) {
       router.push('/')
     }
   }, [calendarData, router])
 
+  // Navigation handlers
   const handleGoBack = () => {
     router.push('/')
   }
@@ -88,10 +93,15 @@ export default function CalendarPage() {
     router.push('/')
   }
 
+  // Change the current month, respecting the selected date range
   const changeMonth = (increment: number) => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1))
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1)
+    if (newDate >= startDate && newDate <= endDate) {
+      setCurrentDate(newDate)
+    }
   }
 
+  // Helper functions for calendar rendering
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   }
@@ -100,6 +110,11 @@ export default function CalendarPage() {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
   }
 
+  const isWithinSelectedRange = (date: Date) => {
+    return date >= startDate && date <= endDate
+  }
+
+  // Export functions (to be implemented)
   const exportAsPDF = () => {
     console.log('Exporting as PDF')
     // Implement PDF export logic here
@@ -110,12 +125,14 @@ export default function CalendarPage() {
     // Implement CSV export logic here
   }
 
+  // Get color for content pillar
   const getPillarColor = (pillarName: string) => {
     const colors = ['bg-[hsl(var(--chart-1))]', 'bg-[hsl(var(--chart-2))]', 'bg-[hsl(var(--chart-3))]', 'bg-[hsl(var(--chart-4))]', 'bg-[hsl(var(--chart-5))]']
     const index = calendarData?.contentPillars.findIndex((pillar) => pillar.name === pillarName) || 0
     return colors[index % colors.length]
   }
 
+  // Render the calendar grid
   const renderCalendar = () => {
     const data: CalendarData | null = calendarData;
     if (!data) return null;
@@ -124,39 +141,51 @@ export default function CalendarPage() {
     const firstDayOfMonth = getFirstDayOfMonth(currentDate)
     const calendarDays = []
 
+    // Add empty cells for days before the first of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
       calendarDays.push(<div key={`empty-${i}`} className="h-40 border border-gray-200"></div>)
     }
 
+    // Render each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-      const dayContent = data.contentIdeas.filter(
-        (content) => new Date(content.date).toDateString() === date.toDateString()
-      )
 
-      calendarDays.push(
-        <div key={day} className="h-40 border border-gray-200 p-1 overflow-y-auto">
-          <div className="text-sm font-semibold mb-1">{day}</div>
-          <div className="space-y-1">
-            {dayContent.map((content, index) => (
-              <div
-                key={index}
-                className={`${getPillarColor(content.pillar)} p-2 rounded-md shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer text-xs`}
-                onClick={() => setSelectedContent(content)}
-              >
-                <div className="flex items-center space-x-2">
-                  <div className="flex-shrink-0">
-                    {getIcon(content.platform)}
-                  </div>
-                  <div className="flex-grow truncate">
-                    {content.platform}: {content.summary}
+      if (isWithinSelectedRange(date)) {
+        const dayContent = data.contentIdeas.filter(
+          (content) => new Date(content.date).toDateString() === date.toDateString()
+        )
+
+        calendarDays.push(
+          <div key={day} className="h-40 border border-gray-200 p-1 overflow-y-auto">
+            <div className="text-sm font-semibold mb-1">{day}</div>
+            <div className="space-y-1">
+              {dayContent.map((content, index) => (
+                <div
+                  key={index}
+                  className={`${getPillarColor(content.pillar)} p-2 rounded-md shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer text-xs`}
+                  onClick={() => setSelectedContent(content)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-shrink-0">
+                      {getIcon(content.platform)}
+                    </div>
+                    <div className="flex-grow truncate">
+                      {content.platform}: {content.summary}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )
+        )
+      } else {
+        // Render grayed-out day for dates outside the selected range
+        calendarDays.push(
+          <div key={day} className="h-40 border border-gray-200 bg-gray-100">
+            <div className="text-sm font-semibold mb-1 text-gray-400">{day}</div>
+          </div>
+        )
+      }
     }
 
     return calendarDays
@@ -164,6 +193,7 @@ export default function CalendarPage() {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Header with navigation buttons */}
       <header className="flex items-center justify-between mb-4">
         <Button onClick={handleGoBack} variant="default">
           <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
@@ -174,18 +204,20 @@ export default function CalendarPage() {
         </Button>
       </header>
 
+      {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
-        <Button onClick={() => changeMonth(-1)} variant="default">
+        <Button onClick={() => changeMonth(-1)} variant="default" disabled={currentDate <= startDate}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-xl font-semibold">
           {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </h2>
-        <Button onClick={() => changeMonth(1)} variant="default">
+        <Button onClick={() => changeMonth(1)} variant="default" disabled={new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1) > endDate}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
+      {/* Days of the week header */}
       <div className="grid grid-cols-7 gap-2 mb-4">
         {daysOfWeek.map((day) => (
           <div key={day} className="text-center font-semibold">
@@ -194,8 +226,10 @@ export default function CalendarPage() {
         ))}
       </div>
 
+      {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-2">{renderCalendar()}</div>
 
+      {/* Content pillars display */}
       {calendarData && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-2">Content Pillars</h3>
@@ -209,6 +243,7 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {/* Export dropdown */}
       <div className="fixed bottom-4 right-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -227,6 +262,7 @@ export default function CalendarPage() {
         </DropdownMenu>
       </div>
 
+      {/* Content details dialog */}
       <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
         <DialogContent className="bg-background">
           <DialogHeader>
