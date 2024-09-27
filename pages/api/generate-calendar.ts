@@ -97,9 +97,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Number of content ideas needed: ${dates.length}
 
         Please provide the following in your response:
-        1. 5 content pillars relevant to the business
-        2. Provide one frequently asked question by the target audience
-        3. Generate exactly ${dates.length} content ideas, one for each of these dates: ${dates.map(d => d.toISOString().split('T')[0]).join(', ')}
+        1. First, generate exactly 5 content pillars relevant to the business. These pillars should be concise, distinct, and cover different aspects of the business.
+        2. Then, generate one frequently asked question by the target audience.
+        3. Finally, generate exactly ${dates.length} content ideas, one for each of these dates: ${dates.map(d => d.toISOString().split('T')[0]).join(', ')}
+        
+        Important: Ensure that each content idea uses one of the 5 content pillars you generated. Do not introduce any new pillars or variations in the content ideas.
 
         Ensure your response strictly adheres to the following JSON schema:
         {
@@ -107,7 +109,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           "properties": {
             "contentPillars": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": { "type": "string" },
+              "minItems": 5,
+              "maxItems": 5
             },
             "contentIdeas": {
               "type": "array",

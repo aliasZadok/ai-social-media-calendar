@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 
-interface ContentIdea {
+export interface ContentIdea {
   date: string;
   platform: string;
   pillar: string;
@@ -14,6 +14,12 @@ interface ContentIdea {
 interface CalendarData {
   contentPillars: string[];
   contentIdeas: ContentIdea[];
+  platforms: {
+    instagram: boolean;
+    facebook: boolean;
+    twitter: boolean;
+    linkedin: boolean;
+  };
 }
 
 interface FormData {

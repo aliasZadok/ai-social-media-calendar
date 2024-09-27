@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAppStore } from '@/lib/store'
+import exportAsCSV from '@/lib/csv-export'
+import { exportAsPDF } from '@/lib/pdf-export';
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -106,19 +108,30 @@ export default function CalendarPage() {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
   }
 
-  const isWithinSelectedRange = (date: Date) => {
-    return date >= startDate && date <= endDate
-  }
-
   // Export functions (to be implemented)
-  const exportAsPDF = () => {
-    console.log('Exporting as PDF')
-    // Implement PDF export logic here
-  }
+const handleExportAsPDF = () => {
+  if (calendarData) {
+    // Ensure the platforms and distributionPattern data are included in calendarData
+    const calendarDataWithPlatformsAndPattern = {
+      ...calendarData,
+      platforms: formData.platforms,  // Add platforms from formData
+      distributionPattern: formData.distributionPattern,  // Add distribution pattern from formData
+    };
 
-  const exportAsCSV = () => {
-    console.log('Exporting as CSV')
-    // Implement CSV export logic here
+    console.log("Export as PDF clicked");
+    console.log("Start Date:", startDate, "End Date:", endDate);
+    console.log("Calendar Data:", calendarDataWithPlatformsAndPattern);
+
+    exportAsPDF(calendarDataWithPlatformsAndPattern, startDate);
+  } else {
+    console.log("No calendar data available to export");
+  }
+};
+
+  const handleExportAsCSV = () => {
+    if (calendarData) {
+      exportAsCSV(calendarData)
+    }
   }
 
   // Get color for content pillar
@@ -138,7 +151,7 @@ export default function CalendarPage() {
 
     // Add empty cells for days before the first of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      calendarDays.push(<div key={`empty-${i}`} className="h-40 border border-gray-200"></div>)
+      calendarDays.push(<div key={`empty-${i}`} className="h-40 border border-gray-200 bg-gray-100"></div>)
     }
 
     // Render each day of the month
@@ -146,16 +159,26 @@ export default function CalendarPage() {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
       const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' });
 
-      if (isWithinSelectedRange(date)) {
-        const dayContent = calendarData.contentIdeas.filter(
-          (content) => new Date(content.date).toDateString() === date.toDateString()
-        )
+      const isWithinRange = isWithinSelectedRange(date);
+      const isPostingDay = formData.distributionPattern.includes(dayOfWeek);
 
-        const isPostingDay = formData.distributionPattern.includes(dayOfWeek);
+      const dayContent = calendarData.contentIdeas.filter(
+        (content) => {
+          const contentDate = new Date(content.date);
+          return contentDate.getFullYear() === date.getFullYear() &&
+                 contentDate.getMonth() === date.getMonth() &&
+                 contentDate.getDate() === date.getDate();
+        }
+      )
 
-        calendarDays.push(
-          <div key={day} className={`h-40 border border-gray-200 p-1 overflow-y-auto ${isPostingDay ? 'bg-blue-50' : ''}`}>
-            <div className="text-sm font-semibold mb-1">{day}</div>
+      calendarDays.push(
+        <div 
+          key={day} 
+          className={`h-40 border border-gray-200 p-1 overflow-y-auto
+            ${isWithinRange ? (isPostingDay ? 'bg-blue-50' : '') : 'bg-gray-100'}`}
+        >
+          <div className={`text-sm font-semibold mb-1 ${isWithinRange ? '' : 'text-gray-400'}`}>{day}</div>
+          {isWithinRange && (
             <div className="space-y-1">
               {dayContent.map((content, index) => (
                 <div
@@ -168,25 +191,33 @@ export default function CalendarPage() {
                       {getIcon(content.platform)}
                     </div>
                     <div className="flex-grow truncate">
-                      {content.platform}: {content.summary}
+                      {capitalizeFirstLetter(content.platform)}: {content.summary}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )
-      } else {
-        // Render grayed-out day for dates outside the selected range
-        calendarDays.push(
-          <div key={day} className="h-40 border border-gray-200 bg-gray-100">
-            <div className="text-sm font-semibold mb-1 text-gray-400">{day}</div>
-          </div>
-        )
-      }
+          )}
+        </div>
+      )
     }
 
     return calendarDays
+  }
+
+  const isWithinSelectedRange = (date: Date) => {
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
+    // Set the time to midnight for consistent comparison
+    date.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+    return date >= startDate && date <= endDate;
+  }
+
+
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
   return (
@@ -257,10 +288,10 @@ export default function CalendarPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={exportAsPDF}>
+            <DropdownMenuItem onClick={handleExportAsPDF}>
               <FileText className="mr-2 h-4 w-4" /> Export as PDF
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={exportAsCSV}>
+            <DropdownMenuItem onClick={handleExportAsCSV}>
               <Table className="mr-2 h-4 w-4" /> Export as CSV
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -270,10 +301,10 @@ export default function CalendarPage() {
       {/* Content details dialog */}
       <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
         <DialogContent className="bg-background">
-          <DialogHeader>
+        <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               {selectedContent && getIcon(selectedContent.platform)}
-              <span>{selectedContent?.platform} Post</span>
+              <span>{selectedContent && capitalizeFirstLetter(selectedContent.platform)} Post</span>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
