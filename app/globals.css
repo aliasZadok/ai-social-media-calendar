@@ -67,3 +67,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.error-message {
+  color: #ef4444; /* This is equivalent to Tailwind's red-500 */
+  font-size: 0.875rem; /* This is equivalent to Tailwind's text-sm */
+}

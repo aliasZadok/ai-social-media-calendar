@@ -141,16 +141,21 @@ export function LandingPage() {
     const start = new Date(startDate)
     const end = new Date(endDate)
 
+    // Check if end date is before start date
+    if (end < start) {
+      setDateError('The end date must be after the start date.')
+      setDateRangeInDays(0)
+      return
+    }
+
     // Calculate the difference in days
-    const diffTime = Math.abs(end.getTime() - start.getTime())
+    const diffTime = end.getTime() - start.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
     setDateRangeInDays(diffDays)
 
     if (diffDays > 90) {
       setDateError('The date range cannot exceed 90 days.')
-    } else if (diffDays < 0) {
-      setDateError('The end date must be after the start date.')
     } else {
       setDateError(null)
     }
@@ -240,7 +245,7 @@ export function LandingPage() {
               {isUploading ? 'Uploading...' : 'Upload PDF/TXT'}
             </Button>
           </div>
-          {uploadError && <p className="text-red-500 text-sm">{uploadError}</p>}
+          {uploadError && <p className="error-message">{uploadError}</p>}
           <div className="space-y-2">
             <label className="text-sm font-medium">Preferred social media platforms</label>
             <div className="grid grid-cols-2 gap-4">
@@ -277,7 +282,7 @@ export function LandingPage() {
               />
             </div>
           </div>
-          {dateError && <p className="text-red-500 text-sm">{dateError}</p>}
+          {dateError && <p className="error-message">{dateError}</p>}
 
           <FrequencySelector
             value={localFormData.frequency}
