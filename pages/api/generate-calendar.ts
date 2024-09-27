@@ -136,18 +136,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Your response should be a valid JSON object matching this schema exactly.
       `;
 
-      const logFilePath = path.join(process.cwd(), 'chatgpt_logs.txt');
-      console.log('Attempting to write log file to:', logFilePath);
-
       const generateContent = async (dates: Date[]): Promise<ChunkResult> => {
         const prompt = generatePrompt(dates);
-
-        try {
-          await fs.appendFile(logFilePath, `Prompt sent to ChatGPT:\n${prompt}\n\n`);
-          console.log('Successfully wrote prompt to log file');
-        } catch (writeError) {
-          console.error('Error writing prompt to log file:', writeError);
-        }
+        console.log('Generated prompt for ChatGPT:', prompt);
 
         try {
           const response = await openai.chat.completions.create({
@@ -160,12 +151,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
 
           const generatedContent = JSON.parse(response.choices[0].message.content!) as GeneratedContent;
-          await fs.appendFile(logFilePath, `Response from ChatGPT:\n${JSON.stringify(generatedContent, null, 2)}\n\n`);
-          console.log('Successfully wrote response to log file');
+          console.log('Received response from ChatGPT:', JSON.stringify(generatedContent, null, 2));
           return { success: true, content: generatedContent };
         } catch (error) {
           console.error('Error generating or parsing content:', error);
-          await fs.appendFile(logFilePath, `Error generating or parsing content:\n${error}\n\n`);
           return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
         }
       };
