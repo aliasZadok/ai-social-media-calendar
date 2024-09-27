@@ -29,6 +29,12 @@ interface GeneratedContent {
   contentIdeas: ContentIdea[];
 }
 
+interface ChunkResult {
+  success: boolean;
+  content?: GeneratedContent;
+  error?: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
@@ -46,29 +52,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const endDate = Array.isArray(data.fields.endDate) ? data.fields.endDate[0] : data.fields.endDate;
       const frequency = Array.isArray(data.fields.frequency) ? parseInt(data.fields.frequency[0]) : parseInt(data.fields.frequency || '0');
 
+      // Fix for the TypeScript error
+      const distributionPatternRaw = Array.isArray(data.fields.distributionPattern) 
+        ? data.fields.distributionPattern[0] 
+        : data.fields.distributionPattern;
+      const distributionPattern = distributionPatternRaw 
+        ? JSON.parse(distributionPatternRaw as string) 
+        : ['Monday', 'Wednesday', 'Friday']; // Default value if undefined
+
       if (!description || !platforms || !startDate || !endDate || isNaN(frequency)) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      const parsedPlatforms = JSON.parse(platforms);
+      const parsedPlatforms = JSON.parse(platforms as string);
 
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const daysDifference = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
+
+      // Generate dates for content ideas based on the new frequency and distribution pattern
+      const contentDates = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dayOfWeek = d.toLocaleString('en-US', { weekday: 'long' });
+        if (distributionPattern.includes(dayOfWeek)) {
+          contentDates.push(new Date(d));
+        }
+      }
 
       const getFrequencyLabel = (freq: number) => {
-        if (freq === 1) return 'Daily';
-        if (freq === 7) return 'Weekly';
-        if (freq === 14) return 'Bi-weekly';
-        if (freq === 30) return 'Monthly';
-        return `Every ${freq} days`;
+        if (freq === 1) return 'Once a week';
+        if (freq === 2) return 'Twice a week';
+        if (freq === 3) return 'Three times a week';
+        if (freq === 5) return 'Five times a week';
+        if (freq === 7) return 'Daily';
+        return `${freq} times a week`;
       };
-
-      // Generate dates for content ideas
-      const contentDates = [];
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + frequency)) {
-        contentDates.push(new Date(d));
-      }
 
       const generatePrompt = (dates: Date[]) => `
         Generate a social media content calendar based on the following information:
@@ -76,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Target platforms: ${Object.keys(parsedPlatforms).filter(p => parsedPlatforms[p]).join(', ')}
         Date range: ${dates[0].toISOString().split('T')[0]} to ${dates[dates.length - 1].toISOString().split('T')[0]}
         Total days: ${dates.length}
-        Posting frequency: ${getFrequencyLabel(frequency)}
+        Posting frequency: ${getFrequencyLabel(frequency)} on ${distributionPattern.join(', ')}
         Number of content ideas needed: ${dates.length}
 
         Please provide the following in your response:
@@ -140,8 +157,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           const generatedContent = JSON.parse(response.choices[0].message.content!) as GeneratedContent;
           await fs.appendFile(logFilePath, `Response from ChatGPT:\n${JSON.stringify(generatedContent, null, 2)}\n\n`);
-          return { success: true, content: generatedContent };
           console.log('Successfully wrote response to log file');
+          return { success: true, content: generatedContent };
         } catch (error) {
           console.error('Error generating or parsing content:', error);
           await fs.appendFile(logFilePath, `Error generating or parsing content:\n${error}\n\n`);
@@ -150,9 +167,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
 
       let initialChunkSize = 30; // Start with 30 days
-      let maxChunkSize = 60; // Maximum chunk size to try
-      let minChunkSize = 7; // Minimum chunk size to try
-      let allContent: GeneratedContent = { contentPillars: [], contentIdeas: [] };
+      const maxChunkSize = 60; // Maximum chunk size to try
+      const minChunkSize = 7; // Minimum chunk size to try
+      const allContent: GeneratedContent = { contentPillars: [], contentIdeas: [] };
 
       for (let i = 0; i < contentDates.length;) {
         let currentChunkSize = initialChunkSize;

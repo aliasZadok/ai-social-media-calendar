@@ -50,11 +50,6 @@ interface ContentIdea {
   contentIdea: string;
 }
 
-interface CalendarData {
-  contentPillars: string[]; 
-  contentIdeas: ContentIdea[];
-}
-
 const getIcon = (platform: string): JSX.Element | null => {
   const lowercasePlatform = platform.toLowerCase();
   return socialMediaIcons[lowercasePlatform as keyof typeof socialMediaIcons] || null;
@@ -62,7 +57,7 @@ const getIcon = (platform: string): JSX.Element | null => {
 
 export default function CalendarPage() {
   const router = useRouter()
-  const { formData, calendarData, clearCalendarData, clearFormData } = useAppStore()
+  const { formData, calendarData, clearCalendarData, clearFormData } = useAppStore() 
   const [currentDate, setCurrentDate] = useState(new Date(formData.startDate))
   const [selectedContent, setSelectedContent] = useState<ContentIdea | null>(null)
 
@@ -90,7 +85,14 @@ export default function CalendarPage() {
   // Change the current month, respecting the selected date range
   const changeMonth = (increment: number) => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1)
-    if (newDate >= startDate && newDate <= endDate) {
+    
+    // Check if the new month has any days within the selected range
+    const lastDayOfNewMonth = new Date(newDate.getFullYear(), newDate.getMonth() + 1, 0)
+    
+    if (
+      (increment < 0 && lastDayOfNewMonth >= startDate) || // For previous month
+      (increment > 0 && newDate <= endDate) // For next month
+    ) {
       setCurrentDate(newDate)
     }
   }
@@ -122,14 +124,13 @@ export default function CalendarPage() {
   // Get color for content pillar
   const getPillarColor = (pillarName: string) => {
     const colors = ['bg-[hsl(var(--chart-1))]', 'bg-[hsl(var(--chart-2))]', 'bg-[hsl(var(--chart-3))]', 'bg-[hsl(var(--chart-4))]', 'bg-[hsl(var(--chart-5))]']
-    const index = calendarData?.contentPillars.indexOf(pillarName) || 0  // Update this line
+    const index = calendarData?.contentPillars.indexOf(pillarName) || 0
     return colors[index % colors.length]
   }
 
   // Render the calendar grid
   const renderCalendar = () => {
-    const data: CalendarData | null = calendarData;
-    if (!data) return null;
+    if (!calendarData) return null;
 
     const daysInMonth = getDaysInMonth(currentDate)
     const firstDayOfMonth = getFirstDayOfMonth(currentDate)
@@ -143,14 +144,17 @@ export default function CalendarPage() {
     // Render each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+      const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' });
 
       if (isWithinSelectedRange(date)) {
-        const dayContent = data.contentIdeas.filter(
+        const dayContent = calendarData.contentIdeas.filter(
           (content) => new Date(content.date).toDateString() === date.toDateString()
         )
 
+        const isPostingDay = formData.distributionPattern.includes(dayOfWeek);
+
         calendarDays.push(
-          <div key={day} className="h-40 border border-gray-200 p-1 overflow-y-auto">
+          <div key={day} className={`h-40 border border-gray-200 p-1 overflow-y-auto ${isPostingDay ? 'bg-blue-50' : ''}`}>
             <div className="text-sm font-semibold mb-1">{day}</div>
             <div className="space-y-1">
               {dayContent.map((content, index) => (
@@ -200,13 +204,21 @@ export default function CalendarPage() {
 
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
-        <Button onClick={() => changeMonth(-1)} variant="default" disabled={currentDate <= startDate}>
+        <Button 
+          onClick={() => changeMonth(-1)} 
+          variant="default" 
+          disabled={new Date(currentDate.getFullYear(), currentDate.getMonth(), 0) < startDate}
+        >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-xl font-semibold">
           {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </h2>
-        <Button onClick={() => changeMonth(1)} variant="default" disabled={new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1) > endDate}>
+        <Button 
+          onClick={() => changeMonth(1)} 
+          variant="default" 
+          disabled={new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1) > endDate}
+        >
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

@@ -1,73 +1,73 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { devtools, persist } from 'zustand/middleware'
 
-type FrequencyOption = 1 | 7 | 14 | 30;
-
-interface CalendarFormData {
-    description: string
-    platforms: {
-        instagram: boolean
-        facebook: boolean
-        twitter: boolean
-        linkedin: boolean
-    }
-    startDate: string
-    endDate: string
-    frequency: FrequencyOption
+interface ContentIdea {
+  date: string;
+  platform: string;
+  pillar: string;
+  contentType: string;
+  summary: string;
+  question: string;
+  contentIdea: string;
 }
 
 interface CalendarData {
-    contentPillars: string[];
-    contentIdeas: ContentIdea[]
+  contentPillars: string[];
+  contentIdeas: ContentIdea[];
 }
 
-interface ContentIdea {
-    date: string
-    platform: string
-    pillar: string
-    contentType: string
-    summary: string
-    question: string
-    contentIdea: string
+interface FormData {
+  description: string
+  platforms: {
+    instagram: boolean
+    facebook: boolean
+    twitter: boolean
+    linkedin: boolean
+  }
+  startDate: string
+  endDate: string
+  frequency: number
+  distributionPattern: string[]
 }
 
 interface AppState {
-    formData: CalendarFormData
-    calendarData: CalendarData | null
-    setFormData: (formData: Partial<CalendarFormData>) => void
-    setCalendarData: (calendarData: CalendarData) => void
-    clearFormData: () => void
-    clearCalendarData: () => void
+  formData: FormData
+  calendarData: CalendarData | null
+  setFormData: (data: Partial<FormData>) => void
+  setCalendarData: (data: CalendarData) => void
+  clearFormData: () => void
+  clearCalendarData: () => void
 }
 
-const initialFormData: CalendarFormData = {
-    description: '',
-    platforms: {
-        instagram: false,
-        facebook: false,
-        twitter: false,
-        linkedin: false,
-    },
-    startDate: '',
-    endDate: '',
-    frequency: 7,  // Default to weekly (7 days)
+const initialFormData: FormData = {
+  description: '',
+  platforms: {
+    instagram: false,
+    facebook: false,
+    twitter: false,
+    linkedin: false,
+  },
+  startDate: '',
+  endDate: '',
+  frequency: 3,
+  distributionPattern: ['Monday', 'Wednesday', 'Friday'],
 }
 
 export const useAppStore = create<AppState>()(
+  devtools(
     persist(
-        (set) => ({
-            formData: initialFormData,
-            calendarData: null,
-            setFormData: (newFormData) => set((state) => ({
-                formData: { ...state.formData, ...newFormData }
-            })),
-            setCalendarData: (calendarData) => set({ calendarData }),
-            clearFormData: () => set({ formData: initialFormData }),
-            clearCalendarData: () => set({ calendarData: null }),
-        }),
-        {
-            name: 'app-storage',
-            storage: createJSONStorage(() => localStorage),
-        }
+      (set) => ({
+        formData: initialFormData,
+        calendarData: null,
+        setFormData: (data) =>
+          set((state) => ({ formData: { ...state.formData, ...data } })),
+        setCalendarData: (data) => set({ calendarData: data }),
+        clearFormData: () => set({ formData: initialFormData }),
+        clearCalendarData: () => set({ calendarData: null }),
+      }),
+      {
+        name: 'app-storage',
+      }
     )
+  )
 )
